@@ -1,0 +1,63 @@
+L=1; imax=22;
+T0=100; T_wb=300;T_eb=300.0; 
+Q_vol_gen=0;
+ epsilon_st=0.0001; 
+t=0;
+ x=linspace(0,L,imax-1); % Coordinates of face centers
+y=zeros(1,imax-1); 
+xc(1)=x(1); xc(imax)=x(imax-1); 
+for i=2:imax-1
+xc(i)=(x(i)+x(i-1))/2;
+end
+
+
+alpha=1; DTc=T_eb-T_wb;
+Dx = L/(imax-2); Dt=1000;  %0.99*0.5* (Dx*Dx/alpha);
+Q_gen=Q_vol_gen*Dx; % Total Heat Generation
+
+%STEP-3: IC and BCs
+T(2:imax-1)=T0; T(1)=T_wb; T(imax)=T_eb; 
+
+% Time-Marching for Explicit Unsteady State LAEs: START 
+unsteadiness=1; n=0;
+ko=(alpha*Dt)/Dx;
+term=1+2*ko;
+term1=1+3*ko;
+while unsteadiness>=epsilon_st
+%Step 4: Consider the temp. as the previous value 
+    n=n+1; 
+     T_old=T;
+    T_pr=T_old;
+ % STEP 5: Computation of conduction-flux and temperature
+    
+   % qx_old(1)=-(T(2)-T(1))/(Dx/2.0);
+    for i=2:imax-1
+        if(i==2)
+             
+        T(i)= (T_old(i)+ko*(2*T(i+1)+T(i-1)))/term1;
+            
+       
+        elseif (i==imax-1)
+            T(i)= (T_old(i)+ko*(T(i+1)+2*T(i-1)))/term1;
+             
+         else 
+            T(i)= (T_old(i)+ko*(T(i+1)+T(i-1)))/term;
+         end
+        
+       %t=t+dt; 
+        %disp(t);
+        
+       if (rem(n-1,100)==0)
+            plot(xc,T,'mo');
+           line(xc,T);
+           hold on
+        end
+       
+    end	
+%STEP 6: Steady state convergance criterion
+    unsteadiness=max(max(abs(T-T_old)/Dt));
+    %unsteadiness_nd=unsteadiness*L*L/(alpha*DTc); %STEP 5: Steady state converegnce criterion
+    fprintf("Time step no. %5d, Unsteadiness) = %8.4e\n", n , unsteadiness);
+    disp(T);
+% STEP 7: End of While loop
+end

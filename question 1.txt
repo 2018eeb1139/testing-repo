@@ -1,0 +1,82 @@
+%Subodh Pratap Chandra,11641050
+
+n=3; %Grids
+l=0.02; %Thickness
+dx=l/n; %Spacing
+Q=800000; %Heat Generation
+Ta= 100; %Temperature of left wall
+Tb = 200; %Temperature of right wall
+k=0.5; %Thermal Conductivity
+
+coordi = [0 dx/2];
+din = dx/2;
+
+%Coordinates of grid points.
+for i=0:n-2
+    din = din + dx;
+    coordi = [coordi din];
+end
+coordi = [coordi l];
+
+
+%Middle Diagonal of LHS Matrix
+M=[(3*k/dx)];
+for i=2:n-1
+    M=[M,(2*k/dx)] ;
+end
+M=[M,(3*k/dx)];%appending previous values
+
+%Left Diagonal LHS Matrix
+L=[0];
+for i=2:n 
+    L=[L,-(k/dx)] ;%appending previous values
+end 
+
+
+%Right Diagonal Matrix
+R=[];
+for i=1:n-1
+    R=[R,-(k/dx)];%appending previous values
+end 
+R=[R,0];
+
+
+%RHS Matrix
+D=[((2*k*Ta)/dx)+(q*dx)];
+for i=2:n-1
+    D=[D,Q*dx];
+end 
+D=[D,((2*k*Tb)/dx)+ (Q*dx)];%appending previous values
+
+
+%Tdma algorithm
+
+c1dash=R(1)/M(1);
+d1dash=D(1)/M(1);
+Cdash=[c1dash];
+Ddash=[d1dash];
+
+for i=2:n-1
+    Cdash=[Cdash,R(i)/(M(i)-L(i)*Cdash(i-1))];
+end
+
+for i=2:n
+    num=D(i)-L(i)*Ddash(i-1) ;
+    deno=M(i)-L(i)*Cdash(i-1);
+    Ddash=[Ddash,  num/deno];
+end
+
+%disp(Ddash)
+
+X=zeros(1,n);
+X(n)=Ddash(n);
+for i=n-1:-1:1
+    var=Ddash(i)-Cdash(i)*X(i+1);
+    X(i)=var;
+end 
+X=[100 X 200];
+%disp(X)
+plot(coordi,X);
+title('Graph of Temperature(.C) vs Distance(m)')
+xlabel('Distance') 
+ylabel('Temperature')
